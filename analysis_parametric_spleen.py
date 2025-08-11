@@ -101,7 +101,7 @@ def _default_setup():
     n_layers = 25
     y_plus_target = 1
     x_ref_yplus = 1/1000
-    bl = utils.compute_bl_parameters(u2, rho2, mu, axial_chord,
+    bl = utils.compute_bl_parameters(u2, rho2, mu, axial_chord, 
                                      n_layers, y_plus_target, x_ref_yplus)
     first_layer_height = bl['first_layer_height']
     bl_growth = bl['bl_growth']
@@ -148,6 +148,9 @@ def _default_setup():
         'nCellAirfoil': nCellAirfoil,
         'nCellPerimeter': nCellPerimeter,
         'nBoundaryPoints': nBoundaryPoints,
+        'n_layers': n_layers,
+        'y_plus_target': y_plus_target,
+        'x_ref_yplus': x_ref_yplus,
         'first_layer_height': first_layer_height,
         'bl_growth': bl_growth,
         'bl_thickness': bl_thickness,
@@ -301,7 +304,7 @@ def main() -> None:
     params, blade_dat, results_root, bladeName, base_dir = _default_setup()
 
     print('Available variables to vary:')
-    options = ['first_layer_height', 'bl_growth', 'bl_thickness',
+    options = ['first_layer_height', 'bl_growth', 'n_layers',
                'sizeCellFluid', 'VolWAkeIn', 'VolWAkeOut',
                'dist_inlet', 'dist_outlet', 'x_plane']
     for v in options:
@@ -331,6 +334,15 @@ def main() -> None:
         case_params = params.copy()
         for var in values:
             case_params[var] = values[var][i]
+        if 'n_layers' in values:
+            bl = utils.compute_bl_parameters(
+                case_params['u2'], case_params['rho2'], case_params['mu'],
+                case_params['axial_chord'], int(case_params['n_layers']),
+                case_params['y_plus_target'], case_params['x_ref_yplus']
+            )
+            case_params['first_layer_height'] = bl['first_layer_height']
+            case_params['bl_growth'] = bl['bl_growth']
+            case_params['bl_thickness'] = bl['bl_thickness']
         res = _run_case(i+1, case_params, blade_dat, results_root, bladeName, base_dir)
         if res.get('diverged'):
             print(f'Case {i+1} diverged; excluding from plots.')
